@@ -1,11 +1,192 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World!</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hello World</title>
+  <style>
+    :root{
+      --bg:#050607;
+      --turq:oklch(86.765% 0.29314 142.206);
+      --turq-dim: oklch(86.765% 0.29314 142.206);
+      --turq-mid: oklch(86.765% 0.29314 142.206);
+      --white: #ffffff;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: var(--bg);
+      color: var(--white);
+      font-family: comui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      overflow:hidden;
+    }
+
+    /* CRT scanlines + vignette */
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      background:
+        radial-gradient(ellipse at center, oklch(86.765% 0.5 150); 10%, rgba(0,0,0,.2) 60%, rgba(0,0,0,.55) 100%),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02), rgba(255,255,255,.02) 1px, transparent 1px, transparent 3px);
+      pointer-events:none;
+      mix-blend-mode:overlay;
+    }
+
+    .scene{
+      position:relative;
+      height:100vh; width:100vw;
+      display:grid; place-items:center;
+      perspective: 1000px;
+      isolation:isolate;
+    }
+
+    /* Starfield */
+    .stars, .stars::before, .stars::after{
+      position:absolute; inset:0; content:""; display:block;
+      background-image:radial-gradient(var(--turq-mid) 5px, transparent 5px);
+      background-size: 10px 10px;
+      opacity:.15; filter: drop-shadow(0 0 8px var(--turq-mid));
+      animation: drift 60s linear infinite;
+    }
+    .stars::before{ background-size:2px 2px; opacity:.18; animation-duration: 90s; }
+    .stars::after{ background-size:1px 1px; opacity:.1; animation-duration: 120s; }
+    @keyframes drift{ to{ transform: translateY(-200px);} }
+
+    /* Retro floor grid */
+    .grid{
+      position:absolute; left:0; right:0; bottom:-10vh; height:55vh; z-index:0;
+      background:
+        linear-gradient(transparent 0%, rgba(0,0,0,.65) 100%),
+        repeating-linear-gradient(0deg, var(--turq-dim) 0 2px, transparent 2px 40px),
+        repeating-linear-gradient(90deg, var(--turq-dim) 0 2px, transparent 1px 60px);
+      transform: rotateX(70deg) translateZ(-150px);
+      transform-origin: top center;
+      border-top: 3px solid var(--turq-mid);
+      filter: drop-shadow(0 -4px 12px rgba(0,229,255,.15));
+      animation: grid-glow 100s ease-in-out infinite alternate;
+    }
+    @keyframes grid-glow{ to{ filter: drop-shadow(0 -6px 20px rgba(255, 255, 255, 1)); } }
+
+    /* Title */
+    .title{
+      position:relative;
+      z-index:2;
+      line-height:1;
+      letter-spacing:.08em;
+      text-transform: lowercase; /* keep your chosen casing */
+      font-weight:700;
+      text-align:center;
+      animation: enter 1200ms cubic-bezier(.16,.8,.24,1) both;
+    }
+
+    .title span{
+      font-size: clamp(32px, 8vw, 96px);
+      display:inline-block;
+      padding:.25em .5em;
+      color: var(--turq);
+      text-shadow:
+        0 0 6px rgba(255, 255, 255, 1),
+        0 0 18px rgba(255, 255, 255, 1),
+        0 0 36px rgba(255, 255, 255, 1);
+      position:relative;
+      filter: saturate(150%);
+      animation: flicker 10s infinite steps(60);
+    }
+
+    /* Glitch layers */
+    .title::before,
+    .title::after{
+      content: attr(aria-label);
+      position:absolute; inset:0; text-align:center; z-index:-1;
+      font-size: clamp(32px, 8vw, 96px); font-weight:700; letter-spacing:.08em;
+      color: var(--turq);
+    }
+    .title::before{ transform: translate(2px,0); filter: blur(.6px) hue-rotate(10deg); mix-blend-mode:screen; opacity:.35; clip-path: inset(0 0 51% 0); animation: glitchTop 2.2s infinite; }
+    .title::after{ transform: translate(-2px,0); filter: blur(.6px) hue-rotate(-10deg); mix-blend-mode:screen; opacity:.35; clip-path: inset(49% 0 0 0); animation: glitchBottom 1.8s infinite; }
+
+    @keyframes glitchTop{
+      0%,10%,100%{ transform: translate(2px,0) }
+      4%{ transform: translate(4px,-1px) skewX(8deg) }
+      7%{ transform: translate(1px,2px) skewX(-4deg) }
+    }
+    @keyframes glitchBottom{
+      0%,10%,100%{ transform: translate(-2px,0) }
+      3%{ transform: translate(-4px,1px) skewX(-6deg) }
+      6%{ transform: translate(-1px,-2px) skewX(3deg) }
+    }
+
+    @keyframes flicker{
+      0%, 19%, 21%, 23%, 80%, 100% { opacity:1 }
+      20%, 22%, 24% { opacity:.88 }
+      55% { opacity:.95 }
+    }
+
+    @keyframes enter{
+      from{ opacity:0; transform: translateY(20px) scale(.98); filter: blur(6px) }
+      to  { opacity:1; transform: translateY(0)    scale(1);   filter: blur(0) }
+    }
+
+    /* Subtext (optional helper prompt) */
+    .hint{
+      position:absolute; bottom:2.25rem; left:50%; transform: translateX(-50%);
+      font-size: clamp(12px, 1.8vw, 14px);
+      letter-spacing:.15em; text-transform:uppercase; opacity:.7;
+      color: var(--turq);
+      text-shadow: 0 0 8px rgba(255, 0, 0, 0.2);
+      animation: blink 2s ease-in-out infinite;
+      user-select:none;
+    }
+    @keyframes blink{ 0%,100%{opacity:.3} 50%{opacity:.75} }
+
+    /* Reduce motion respect */
+    @media (prefers-reduced-motion: reduce){
+      *{ animation: none !important; transition: none !important }
+    }
+  </style>
 </head>
 <body>
-    <h1>Welcome World 2!</h1>
+  <div class="scene">
+    <div class="stars" aria-hidden="true"></div>
+    <div class="grid" aria-hidden="true"></div>
+
+    <h1 class="title" aria-label="hello world">
+      <span>hello world</span>
+    </h1>
+
+  </div>
+
+  <script>
+    // Subtle parallax tilt + glow pulse
+    const scene = document.querySelector('.scene');
+    const title = document.querySelector('.title span');
+
+    let glow = 0;
+    function animateGlow(){
+      glow = (glow + 0.1) % (Math.PI*2);
+      const intensity = 0.3 + Math.abs(Math.sin(glow))*0.4;
+      title.style.textShadow = `0 0 6px rgba(0,229,255,${0.5+intensity/2}), 0 0 18px rgba(0,229,255,${0.25+intensity/3}), 0 0 36px rgba(0,229,255,${0.12+intensity/4})`;
+      requestAnimationFrame(animateGlow);
+    }
+    animateGlow();
+
+    function handleMove(e){
+      const rect = scene.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width;   // 0..1
+      const y = (e.clientY - rect.top) / rect.height;   // 0..1
+      const rx = (y - 0.5) * 6; // rotateX
+      const ry = (x - 0.5) * -8; // rotateY
+      scene.style.setProperty('--rx', rx.toFixed(2));
+      scene.style.setProperty('--ry', ry.toFixed(2));
+      title.parentElement.style.transform = `translateZ(0) rotateX(${rx}deg) rotateY(${ry}deg)`;
+    }
+    window.addEventListener('mousemove', handleMove);
+
+    // Keyboard easter egg: press any key to toggle the helper text
+    const hint = document.querySelector('.hint');
+    window.addEventListener('keydown', ()=>{
+      hint.style.display = hint.style.display === 'none' ? 'block' : 'none';
+    });
+  </script>
 </body>
 </html>
